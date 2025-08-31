@@ -1,4 +1,4 @@
-import { Parser } from "./lambda.js";
+import { Parser } from "./parser.js";
 
 
 export class App {
@@ -9,5 +9,4 @@ export class App {
     doParse(str) {
         return this.p.parse(str.replaceAll('L', "λ"))
     }
-
 }
