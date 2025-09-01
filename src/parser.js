@@ -1,4 +1,4 @@
-import { LVal, LFunc, LApply } from lambda
+import { LVal, LFunc, LApply } from "lambda.js"
 
 var lambda = "λ";
 
@@ -32,7 +32,7 @@ export class Parser {
                 ret = new LApply(ret, elems[i]);
         }
 
-        return ret;
+        return et;
     }
 
     parseFun(str) {
