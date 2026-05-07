@@ -1,29 +1,44 @@
 
+var LambdaForceBrackets = false;
+
 /**  
  * root element of a lambda expression. 
  * mostly there to avoid this.parent being null in the lambda logic
  */
 export class LRoot {
-    constructor(expression) { 
-        this.e = expression; 
+    constructor(e) { 
+        this.e = e; 
         this.e.parent = this;
     }
 
-    findFunc =  () =>  this.e.findFunc();
-    clone =     () => new LRoot(this.e.clone());
-    toString =  () => this.e.toString();
-    replace =   (old, expr) => this.e = expr;
+    findFunc() { return this.e.findFunc(); }
+    clone() { return new LRoot(this.e.clone()); }
+    toString() { return this.e.toString(); }
+    replace(old, expr) { return this.e = expr; }
+    findUnbound(outlist) { return this.e.findUnbound([], outlist); }
+    setForceBrackets(b) { LambdaForceBrackets = b }
+    reqBrackets() { return false }
 }
 
-/** single letter in a lambda expression */
+/** 
+ * single letter in a lambda expression 
+ */
 export class LVal {
-    constructor(e) { this.e }
-    findFunc =  () => null;
-    clone =     () => new LVal(this.body);
-    toString =  () => this.body;
+    constructor(e) { this.e = e }
+    findFunc() { return []; }
+    clone() { return new LVal(this.e); }
+    toString() { return this.e; }
+    reqBrackets() { return false }
+
+    findUnbound(bound, outlist) {
+        if (!bound.includes(this.e))
+            outlist.push(this);
+    }
 }
 
-/** represents a lambda function λf.E */
+/** 
+ * represents a lambda function λf.E 
+ */
 export class LFunc {
 
     constructor(param ,body) {
@@ -37,7 +52,7 @@ export class LFunc {
      * @returns LFunc instance
      */
     findFunc() {
-        return typeof this.parent == LApply && this.parent.left === this ? this : null;
+        return typeof this.parent == LApply && this.parent.left === this ? [ this ] : [];
     }
 
     /**
@@ -55,6 +70,7 @@ export class LFunc {
         var refs = this.findRef();
         if (info)
             return { refs: refs, value: value }
+        
         for (let ref in refs)
             ref.substitute(value);
 
@@ -62,6 +78,11 @@ export class LFunc {
         this.parent.parent.replace(this.body);
     }
 
+    /**
+     * finds all locations that the function parameter is referenced within the function body
+     * @param {LVal} param function parameter 
+     * @param {Array} outlist found references are added to this array
+     */
     findRef(param, outlist) {
         if (this.body.e == param.e)
             outlist.push(new NodeRef(this, "body"));
@@ -69,12 +90,28 @@ export class LFunc {
             this.body.findRef(param, outlist);
     }
 
-    replace = (old, expr) => this.body = expr;
-    clone = () => new LFunc(this.param.clone(), this.body.clone())
-    toString = () =>  '(' + lambda + this.param + "." + this.body + ')';
+    findUnbound(bound, outlist) {
+        this.body.findUnbound(bound.concat([this.param.e]), outlist);
+    }
+
+    replace(old, expr)  { return this.body = expr;}
+    clone() { return new LFunc(this.param.clone(), this.body.clone())}
+    reqBrackets() { return this.parent.left === this }
+
+    toString() { 
+        let s = 'λ' + this.param + "." + this.body;
+        if (this.reqBrackets() || LambdaForceBrackets)
+            return '(' + s + ')';
+        
+        return s;
+    }
+
+    
 }
 
-/** represents (ab)  */
+/** 
+ * represents (ab)  
+ */
 export class LApply {
 
     constructor(a, b) {
@@ -85,8 +122,7 @@ export class LApply {
     }
 
     findFunc() {
-        // TODO collect all viable functions in a list
-        return this.left.findFunc() || this.right.findFunc();
+        return this.left.findFunc().concat(this.right.findFunc());
     }
 
     findRef(param, outlist) {
@@ -108,8 +144,30 @@ export class LApply {
             this.right = expr;
     }
 
-    clone = () => new LApply(a.clone(), b.clone());
-    toString = () => '(' + this.left + this.right + ')';
+    findUnbound(bound, outlist) {
+        this.left.findUnbound(bound, outlist);
+        this.right.findUnbound(bound, outlist);
+    }
+
+    clone() { return new LApply(a.clone(), b.clone()); }
+    reqBrackets() { return this.parent.right === this }
+
+
+    toString() {
+        let s = this.left + this.right;
+        if (this.parent.e === this) 
+            return s;
+
+        if (this.parent.right === this || LambdaForceBrackets)
+            return '(' + s + ')';
+
+        return s;
+
+    }
+
+    genHtml(hl) {
+
+    }
 }
 
 /** references a node and a parameter that is going to replaced by beta reduction */
@@ -122,4 +180,15 @@ export class NodeRef {
     substitute(expression) {
         this.node[this.prop] = expression.clone();
     }
+}
+
+function span(content, cls) {    
+    if (cls)
+        return `<span class="${cls}">${content}</span>`;
+    else
+        return `<span>${content}</span>`;
+}
+
+class HLReg {
+    
 }

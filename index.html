@@ -6,9 +6,19 @@
      <script type="module">
         import { App } from "./src/app.js";
         window.a = new App()
+        a.initUi();
      </script>
 </HEAD>
 <body>
     <h1>test code here</h1>
+    <div>
+        <textarea id="usrInput"></textarea>
+        <pre id="txtErr" class="noerr"></pre>
+    </div>
+    <div>
+        <label>&lambda; output</label>
+        <p id="txtOutput"></p>
+    </div>
+    <a id="btnReduce" href="javascript:">reduce</a>
 </body>
 </html>

@@ -2,3 +2,13 @@ body {
     background-color: #333;
     color: #EEE;
 }
+
+#txtErr {
+    border: solid red 1px;
+    color: red;
+    padding: 5px;
+}
+
+.noerr {
+    display: none;
+}

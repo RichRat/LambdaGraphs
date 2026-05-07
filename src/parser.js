@@ -1,11 +1,22 @@
-import { LVal, LFunc, LApply } from "lambda.js"
+import { LVal, LFunc, LApply, LRoot } from "./lambda.js"
 
 var lambda = "λ";
 
 export class Parser {
+
+    doParse(str) {
+        str = str.replaceAll('L', "λ").replaceAll(/\s+/g, "");
+        let root = new LRoot(this.parse(str));
+        this.unboundVars = []
+        root.findUnbound(this.unboundVars);
+        if (this.unboundVars.length > 0)
+            throw "unbound variables found " + this.unboundVars;
+
+        return root;
+    }
+
     parse(str) {
         let elems = [];
-
         for (let i = 0; i < str.length; i++) {
             if (str[i] == '(') {
                 let o = this.extractBracket(str);
@@ -31,19 +42,27 @@ export class Parser {
             for (let i = 1;  i < elems.length; i++)
                 ret = new LApply(ret, elems[i]);
         }
-
-        return et;
+        
+        return ret;
     }
 
     parseFun(str) {
-        if (!/[A-Za-z]/.test(str[0]))
+        let params = str.match(/[^.]+(?=\.)/)[0]
+        if (!/[A-Za-z]+/.test(params))
             throw "Invalid char for function parameter (missing shorthand replacement?) [A-Za-z] required!"
-        if (str[1] != '.')
+        if (str[params.length] != '.')
             throw "Dot needs to follow a function parameter!"
-        if (str.length <= 2)
+        if (str.length <= params.length + 1)
             throw "no function body present, an expression needs to follow the dot!"
 
-        return new LFunc(new LVal(str[0]), this.parse(str.substr(2)))
+        let body = this.parse(str.substr(params.length + 1));
+        // wrap parameters in functions with the last parameter being the innermost
+        let outfnc = new LFunc(new LVal(params[params.length - 1]), body)
+        for (let i = params.length - 2; i >= 0; i--) {
+            outfnc = new LFunc(new LVal(params[i]), outfnc)
+        }
+
+        return outfnc;
     }
 
     extractBracket(str) {
