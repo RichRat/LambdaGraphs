@@ -14,7 +14,7 @@ export class LRoot {
     findFunc() { return this.e.findFunc(); }
     clone() { return new LRoot(this.e.clone()); }
     toString() { return this.e.toString(); }
-    replace(old, expr) { return this.e = expr; }
+    replace(old, expr) { this.e = expr; this.e.parent = this; }
     findUnbound(outlist) { return this.e.findUnbound([], outlist); }
     setForceBrackets(b) { LambdaForceBrackets = b }
     reqBrackets() { return false }
@@ -29,6 +29,7 @@ export class LVal {
     clone() { return new LVal(this.e); }
     toString() { return this.e; }
     reqBrackets() { return false }
+    findRef() {}
 
     findUnbound(bound, outlist) {
         if (!bound.includes(this.e))
@@ -52,7 +53,8 @@ export class LFunc {
      * @returns LFunc instance
      */
     findFunc() {
-        return typeof this.parent == LApply && this.parent.left === this ? [ this ] : [];
+        let ret = this.parent instanceof LApply && this.parent.left === this ? [this] : []
+        return ret.concat(this.body.findFunc())
     }
 
     /**
@@ -67,15 +69,16 @@ export class LFunc {
             throw "cannot reduce function no apply ((λx.E)a) required"
 
         var value = this.parent.right;
-        var refs = this.findRef();
+        var refs = []
+        this.findRef(this.param, refs);
         if (info)
             return { refs: refs, value: value }
         
-        for (let ref in refs)
+        for (let ref of refs)
             ref.substitute(value);
 
         // note: parent is an LApply and its parent will either be any other node or LRoot
-        this.parent.parent.replace(this.body);
+        this.parent.parent.replace(this.parent, this.body);
     }
 
     /**
@@ -94,9 +97,9 @@ export class LFunc {
         this.body.findUnbound(bound.concat([this.param.e]), outlist);
     }
 
-    replace(old, expr)  { return this.body = expr;}
+    replace(old, expr) { return this.body = expr; this.bodyy.parent = this}
     clone() { return new LFunc(this.param.clone(), this.body.clone())}
-    reqBrackets() { return this.parent.left === this }
+    reqBrackets() { return !(this.parent instanceof LRoot) && this.parent.left === this }
 
     toString() { 
         let s = 'λ' + this.param + "." + this.body;
@@ -105,8 +108,6 @@ export class LFunc {
         
         return s;
     }
-
-    
 }
 
 /** 
@@ -138,6 +139,7 @@ export class LApply {
     }
 
     replace(old, expr) {
+        expr.parent = this
         if (this.left === old)
             this.left = expr;
         else
@@ -162,11 +164,6 @@ export class LApply {
             return '(' + s + ')';
 
         return s;
-
-    }
-
-    genHtml(hl) {
-
     }
 }
 
@@ -178,7 +175,9 @@ export class NodeRef {
     }
 
     substitute(expression) {
-        this.node[this.prop] = expression.clone();
+        let exp = expression.clone()
+        exp.parent = this.node;
+        this.node[this.prop] = expr;
     }
 }
 

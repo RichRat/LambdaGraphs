@@ -12,10 +12,7 @@ function ceText(tag, s) {
 
 class TextRenderer {
 
-    constructor() {
-        
-    }
-
+    constructor() {}
 
     renderExpression(expr, elem) {
         if (expr instanceof LRoot)

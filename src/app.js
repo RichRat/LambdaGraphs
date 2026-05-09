@@ -34,9 +34,10 @@ export class App {
         if (this.expr == null)
             return;
 
-        let fun = this.expr.findFunc()
+        let fun = this.expr.findFunc();
         if (fun) {
-            
+            fun[0].reduce();
+            this.out.innerHTML = this.expr+"";
         }
     }
 

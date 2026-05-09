@@ -19,9 +19,9 @@ export class Parser {
         let elems = [];
         for (let i = 0; i < str.length; i++) {
             if (str[i] == '(') {
-                let o = this.extractBracket(str);
+                let o = this.extractBracket(str.substr(i));
                 elems.push(o.body);
-                i = o.continue - 1;
+                i += o.offset;
             }
             else if (str[i] == lambda) {
                 elems.push(this.parseFun(str.substr(i + 1)))
@@ -48,8 +48,8 @@ export class Parser {
 
     parseFun(str) {
         let params = str.match(/[^.]+(?=\.)/)[0]
-        if (!/[A-Za-z]+/.test(params))
-            throw "Invalid char for function parameter (missing shorthand replacement?) [A-Za-z] required!"
+        if (!/^[A-Za-z]+$/.test(params))
+            throw "Invalid char for function parameter [A-Za-z] required!"
         if (str[params.length] != '.')
             throw "Dot needs to follow a function parameter!"
         if (str.length <= params.length + 1)
@@ -74,7 +74,7 @@ export class Parser {
                 if (count == 0) {
                     return {
                         body: this.parse(str.substring(1, i)),
-                        continue: i + 1
+                        offset: i
                     };
                 }
                 count--;

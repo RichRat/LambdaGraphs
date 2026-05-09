@@ -2,7 +2,11 @@
 <html>
 <HEAD>
     <title>lamba calculus fun</title>
-    <link rel="stylesheet" href="./style/style.css" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="style/style.css">
      <script type="module">
         import { App } from "./src/app.js";
         window.a = new App()
@@ -10,15 +14,17 @@
      </script>
 </HEAD>
 <body>
-    <h1>test code here</h1>
-    <div>
-        <textarea id="usrInput"></textarea>
-        <pre id="txtErr" class="noerr"></pre>
-    </div>
-    <div>
-        <label>&lambda; output</label>
-        <p id="txtOutput"></p>
-    </div>
-    <a id="btnReduce" href="javascript:">reduce</a>
+    <main class="container">
+        <h1>Fun with lambdas</h1>
+        <div>
+            <textarea id="usrInput"></textarea>
+            <pre id="txtErr" class="noerr"></pre>
+        </div>
+        <div>
+            <label>&lambda; output</label>
+            <p id="txtOutput"></p>
+        </div>
+        <a id="btnReduce" href="javascript:">reduce</a>
+    </main>
 </body>
 </html>
